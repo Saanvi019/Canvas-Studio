@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-
+import bcrypt from "bcrypt";
 import { validationResult } from "express-validator";
 
 export function validate(

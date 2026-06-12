@@ -27,18 +27,15 @@ enum AssetType {
 }
 
 model User {
-  id           String      @id @default(cuid())
-  email        String      @unique
-  passwordHash String
-  refreshToken String?
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String
+  refreshToken  String?
 
-  plan         UserPlan    @default(FREE)
-  createdAt    DateTime    @default(now())
+  plan          UserPlan @default(FREE)
+  createdAt     DateTime @default(now())
 
-  projects     Project[]
-
-
-  @@index([email])
+  projects      Project[]
 }
 
 model Project {
