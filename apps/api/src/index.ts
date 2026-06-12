@@ -3,27 +3,33 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import dotenv from "dotenv";
+import cookieParser from "cookie-parser";
+import authRoutes from "./routes/auth.routes.js";
 
 dotenv.config();
-const app= express();
+const app = express();
 
 app.use(express.json());
-app.use(cors({
+app.use(cookieParser());
+app.use(
+  cors({
     origin: "http://localhost:3000",
     credentials: true,
-  }));
+  })
+);
 app.use(helmet());
 app.use(morgan("dev"));
+app.use("/api/auth", authRoutes);
 
-app.get("/health", (_req,res)=>{
-    res.json({
-        success:true,
-        message:"API is running successfully"
-    });
+app.get("/health", (_req, res) => {
+  res.json({
+    success: true,
+    message: "API is running successfully",
+  });
 });
 
-const PORT=process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000;
 
-app.listen(PORT,()=>{
-    console.log(`Server is running on port ${PORT}`);
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
