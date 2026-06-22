@@ -5,6 +5,7 @@ import morgan from "morgan";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.routes.js";
+import { auth } from "./middleware/auth.js";
 
 dotenv.config();
 const app = express();
@@ -25,6 +26,12 @@ app.get("/health", (_req, res) => {
   res.json({
     success: true,
     message: "API is running successfully",
+  });
+});
+app.get("/profile", auth, (req, res) => {
+  res.json({
+    success: true,
+    user: req.user,
   });
 });
 
