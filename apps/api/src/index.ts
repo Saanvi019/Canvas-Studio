@@ -5,6 +5,7 @@ import morgan from "morgan";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.routes.js";
+import projectRoutes from "./routes/project.routes.js";
 import { auth } from "./middleware/auth.js";
 
 dotenv.config();
@@ -21,6 +22,7 @@ app.use(
 app.use(helmet());
 app.use(morgan("dev"));
 app.use("/api/auth", authRoutes);
+app.use("/api/projects", projectRoutes);
 
 app.get("/health", (_req, res) => {
   res.json({
