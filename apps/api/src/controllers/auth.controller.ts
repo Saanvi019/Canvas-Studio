@@ -174,7 +174,13 @@ export async function refresh(req: Request, res: Response) {
 
     res.json({
       success: true,
+
       accessToken,
+
+      user: {
+        id: user.id,
+        email: user.email,
+      },
     });
   } catch (error) {
     console.error(error);
