@@ -1,11 +1,12 @@
 import type { Request, Response } from "express";
-
+import { prisma } from "../lib/prisma.js";
 import { gemini } from "../lib/gemini.js";
 import { generateSystemPrompt } from "../prompts/generateSystemPrompt.js";
 import { DesignModelSchema } from "../validators/designModel.schema.js";
+
 export async function generateDesign(req: Request, res: Response) {
   try {
-    const { prompt } = req.body;
+    const { prompt, projectId } = req.body;
 
     if (!prompt) {
       res.status(400).json({
@@ -43,6 +44,25 @@ export async function generateDesign(req: Request, res: Response) {
     };
     const designModel = DesignModelSchema.parse(mockResponse);
 
+    const latestVersion = await prisma.projectVersion.findFirst({
+      where: {
+        projectId,
+      },
+      orderBy: {
+        versionNumber: "desc",
+      },
+    });
+
+    const versionNumber = latestVersion ? latestVersion.versionNumber + 1 : 1;
+
+    const projectVersion = await prisma.projectVersion.create({
+      data: {
+        projectId,
+        versionNumber,
+        designModel,
+      },
+    });
+
     const content = mockResponse;
 
     if (!content) {
@@ -56,6 +76,7 @@ export async function generateDesign(req: Request, res: Response) {
 
     res.json({
       success: true,
+      version: projectVersion,
       designModel,
     });
   } catch (error) {
