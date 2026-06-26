@@ -40,7 +40,8 @@
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.11.0",
     "pg": "^8.21.0",
-    "prisma": "^7.8.0"
+    "prisma": "^7.8.0",
+    "@repo/types": "*"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

@@ -28,5 +28,9 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "@google/genai": "^2.10.0",
+    "zod": "^4.4.3"
+  }
 }

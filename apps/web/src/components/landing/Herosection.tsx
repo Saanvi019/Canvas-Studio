@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { DesignModel } from "@repo/types";
 
 export default function HeroSection() {
   return (

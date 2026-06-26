@@ -7,6 +7,7 @@ import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.routes.js";
 import projectRoutes from "./routes/project.routes.js";
 import { auth } from "./middleware/auth.js";
+import aiRoutes from "./routes/ai.routes.js";
 
 dotenv.config();
 const app = express();
@@ -23,7 +24,7 @@ app.use(helmet());
 app.use(morgan("dev"));
 app.use("/api/auth", authRoutes);
 app.use("/api/projects", projectRoutes);
-
+app.use("/api/ai", aiRoutes);
 app.get("/health", (_req, res) => {
   res.json({
     success: true,
