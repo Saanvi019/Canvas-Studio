@@ -3,6 +3,7 @@ import { prisma } from "../lib/prisma.js";
 import { gemini } from "../lib/gemini.js";
 import { generateSystemPrompt } from "../prompts/generateSystemPrompt.js";
 import { DesignModelSchema } from "../validators/designModel.schema.js";
+import merge from "lodash/merge.js";
 
 export async function generateDesign(req: Request, res: Response) {
   try {
@@ -85,6 +86,36 @@ export async function generateDesign(req: Request, res: Response) {
     res.status(500).json({
       success: false,
       message: "AI generation failed",
+    });
+  }
+}
+
+export async function refineDesign(req: Request, res: Response) {
+  try {
+    const { projectId, designModel, instruction } = req.body;
+
+    if (!projectId || !designModel || !instruction) {
+      res.status(400).json({
+        success: false,
+        message: "Missing required fields",
+      });
+
+      return;
+    }
+
+    const mockPatch = {
+      theme: {
+        primaryColor: "#2563eb",
+      },
+    };
+
+    const updatedDesignModel = merge(structuredClone(designModel), mockPatch);
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Refinement failed",
     });
   }
 }
