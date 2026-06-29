@@ -77,6 +77,19 @@ Valid component types:
 - text
 - image
 
+Never invent image URLs.
+
+If an image is required,
+return
+
+"src": ""
+
+or
+
+"placeholder": true
+
+instead of fake URLs.
+
 Example 1
 
 {

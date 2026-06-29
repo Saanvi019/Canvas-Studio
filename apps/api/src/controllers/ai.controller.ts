@@ -1,9 +1,10 @@
 import type { Request, Response } from "express";
 import { prisma } from "../lib/prisma.js";
-import { gemini } from "../lib/gemini.js";
+import { groq } from "../lib/groq.js";
 import { generateSystemPrompt } from "../prompts/generateSystemPrompt.js";
 import { DesignModelSchema } from "../validators/designModel.schema.js";
 import merge from "lodash/merge.js";
+import sharp from "sharp";
 
 export async function generateDesign(req: Request, res: Response) {
   try {
@@ -18,32 +19,41 @@ export async function generateDesign(req: Request, res: Response) {
       return;
     }
 
-    const mockResponse = {
-      name: "Landing Page",
+    const completion = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
 
-      theme: {
-        primaryColor: "#7c3aed",
-        secondaryColor: "#0f172a",
-        backgroundColor: "#ffffff",
-        textColor: "#111827",
-        borderRadius: "12px",
-        fontFamily: "Inter",
-      },
-
-      components: [
+      messages: [
         {
-          id: "hero-1",
-          type: "hero",
-          content: "Build UI with AI",
+          role: "system",
+          content: generateSystemPrompt,
         },
         {
-          id: "button-1",
-          type: "button",
-          content: "Get Started",
+          role: "user",
+          content: prompt,
         },
       ],
-    };
-    const designModel = DesignModelSchema.parse(mockResponse);
+
+      temperature: 0.5,
+
+      response_format: {
+        type: "json_object",
+      },
+    });
+
+    const content = completion.choices[0]?.message?.content;
+
+    if (!content) {
+      res.status(500).json({
+        success: false,
+        message: "Groq returned no content",
+      });
+
+      return;
+    }
+
+    const parsed = JSON.parse(content);
+
+    const designModel = DesignModelSchema.parse(parsed);
 
     const latestVersion = await prisma.projectVersion.findFirst({
       where: {
@@ -63,17 +73,6 @@ export async function generateDesign(req: Request, res: Response) {
         designModel,
       },
     });
-
-    const content = mockResponse;
-
-    if (!content) {
-      res.status(500).json({
-        success: false,
-        message: "Gemini returned no content",
-      });
-
-      return;
-    }
 
     res.json({
       success: true,
@@ -110,12 +109,73 @@ export async function refineDesign(req: Request, res: Response) {
     };
 
     const updatedDesignModel = merge(structuredClone(designModel), mockPatch);
+    const latestVersion = await prisma.projectVersion.findFirst({
+      where: {
+        projectId,
+      },
+      orderBy: {
+        versionNumber: "desc",
+      },
+    });
+
+    const versionNumber = latestVersion ? latestVersion.versionNumber + 1 : 1;
+
+    const projectVersion = await prisma.projectVersion.create({
+      data: {
+        projectId,
+        versionNumber,
+        designModel: updatedDesignModel,
+      },
+    });
+    res.json({
+      success: true,
+      version: projectVersion,
+      designModel: updatedDesignModel,
+    });
   } catch (error) {
     console.error(error);
 
     res.status(500).json({
       success: false,
       message: "Refinement failed",
+    });
+  }
+}
+
+export async function generateFromImage(req: Request, res: Response) {
+  try {
+    if (!req.file) {
+      res.status(400).json({
+        success: false,
+        message: "Image is required",
+      });
+
+      return;
+    }
+
+    const imageBuffer = await sharp(req.file.buffer)
+      .resize({
+        width: 1024,
+        withoutEnlargement: true,
+      })
+      .jpeg({
+        quality: 80,
+      })
+      .toBuffer();
+
+    const base64 = imageBuffer.toString("base64");
+
+    res.json({
+      success: true,
+      size: imageBuffer.length,
+      base64Length: base64.length,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Image processing failed",
     });
   }
 }
