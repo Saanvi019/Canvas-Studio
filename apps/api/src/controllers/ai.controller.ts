@@ -83,6 +83,7 @@ export async function generateDesign(req: Request, res: Response) {
       success: true,
       version: projectVersion,
       designModel,
+      explanation: `Generated "${designModel.name}" with ${designModel.components.length} components.`,
     });
   } catch (error) {
     console.error(error);
@@ -170,6 +171,7 @@ export async function refineDesign(req: Request, res: Response) {
       success: true,
       version: projectVersion,
       designModel: updatedDesignModel,
+      explanation: "Design refined successfully.",
     });
   } catch (error) {
     console.error(error);
@@ -207,7 +209,7 @@ export async function generateFromImage(req: Request, res: Response) {
     const base64 = imageBuffer.toString("base64");
 
     const response = await hf.chatCompletion({
-      model: "Qwen/Qwen2.5-VL-7B-Instruct",
+      model: "Qwen/Qwen3-VL-8B-Instruct",
 
       messages: [
         {
@@ -215,7 +217,23 @@ export async function generateFromImage(req: Request, res: Response) {
           content: [
             {
               type: "text",
-              text: "Analyze this UI sketch and return ONLY valid DesignModel JSON.",
+              text: `
+${generateSystemPrompt}
+
+The user has uploaded a UI sketch or website screenshot.
+
+Analyze the uploaded image.
+
+Convert it into the exact DesignModel JSON described above.
+
+Return ONLY valid JSON.
+
+Do not wrap it inside another object.
+
+Do not explain anything.
+
+Do not use markdown.
+`,
             },
             {
               type: "image_url",
@@ -231,6 +249,8 @@ export async function generateFromImage(req: Request, res: Response) {
     });
 
     const content = response.choices[0]?.message?.content;
+    console.log("HF Response:");
+    console.dir(content, { depth: null });
 
     if (!content) {
       res.status(500).json({
@@ -243,7 +263,7 @@ export async function generateFromImage(req: Request, res: Response) {
 
     const parsed = JSON.parse(content);
 
-    const designModel = DesignModelSchema.parse(parsed);
+    const designModel = DesignModelSchema.parse(parsed.designModel ?? parsed);
 
     const latestVersion = await prisma.projectVersion.findFirst({
       where: {

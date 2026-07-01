@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 
 import { useDesignStore } from "../../../src/store/designStore";
 import AIChatPanel from "../../../src/components/editor/aiChatPanel";
+import CanvasRenderer from "../../../src/components/editor/canvasRenderer";
 
 export default function ProjectEditorPage() {
   const params = useParams();
@@ -82,34 +83,8 @@ export default function ProjectEditorPage() {
         </aside>
 
         {/* Canvas */}
-        <section className="col-span-8 flex items-center justify-center p-10">
-          <div className="w-full max-w-5xl h-full border border-dashed border-slate-700 rounded-2xl p-8 overflow-auto">
-            <h2 className="text-3xl font-bold mb-8 text-center">Canvas Area</h2>
-
-            {designModel.components.length === 0 ? (
-              <p className="text-slate-400 text-center">
-                Add components from the sidebar
-              </p>
-            ) : (
-              <div className="space-y-4">
-                {designModel.components.map(
-                  (component: { id: string; type: string }) => (
-                    <div
-                      key={component.id}
-                      onClick={() => selectComponent(component.id)}
-                      className={`p-4 rounded-lg border cursor-pointer ${
-                        selectedComponentId === component.id
-                          ? "border-violet-500"
-                          : "border-slate-700"
-                      }`}
-                    >
-                      {component.type}
-                    </div>
-                  )
-                )}
-              </div>
-            )}
-          </div>
+        <section className="col-span-8 p-8">
+          <CanvasRenderer />
         </section>
 
         {/* Right Sidebar */}
@@ -137,7 +112,7 @@ export default function ProjectEditorPage() {
           <div className="mt-4 text-slate-400 text-sm">
             Components Count:
             <br />
-            {designModel.components.length}
+            {designModel?.components.length ?? 0}
           </div>
         </aside>
       </div>

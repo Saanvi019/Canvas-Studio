@@ -35,7 +35,7 @@ export interface DesignComponent {
 
   content?: string;
 
-  styles?: Record<string, string>;
+  styles?: Record<string, string | number | boolean>;
 
   children?: DesignComponent[];
 

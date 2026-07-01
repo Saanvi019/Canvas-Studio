@@ -1,7 +1,7 @@
 import { create } from "zustand";
 
 interface DesignStore {
-  designModel: any;
+  designModel: any | null;
 
   selectedComponentId: string | null;
 
@@ -12,6 +12,8 @@ interface DesignStore {
   isAiLoading: boolean;
 
   codeOutput: string;
+
+  setAiLoading: (loading: boolean) => void;
 
   updateComponent: (id: string, patch: any) => void;
 
@@ -27,9 +29,7 @@ interface DesignStore {
 }
 
 export const useDesignStore = create<DesignStore>((set, get) => ({
-  designModel: {
-    components: [],
-  },
+  designModel: null,
 
   selectedComponentId: null,
 
@@ -40,6 +40,11 @@ export const useDesignStore = create<DesignStore>((set, get) => ({
   isAiLoading: false,
 
   codeOutput: "",
+
+  setAiLoading: (loading) =>
+    set({
+      isAiLoading: loading,
+    }),
 
   setDesignModel: (model) =>
     set({
@@ -53,6 +58,10 @@ export const useDesignStore = create<DesignStore>((set, get) => ({
 
   updateComponent: (id, patch) => {
     const model = get().designModel;
+
+    if (!model) {
+      return;
+    }
 
     const updatedComponents = model.components.map((component: any) =>
       component.id === id

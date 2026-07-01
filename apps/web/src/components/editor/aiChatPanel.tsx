@@ -8,29 +8,50 @@ import { useDesignStore } from "../../../src/store/designStore";
 export default function AIChatPanel() {
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
+  const [aiMessage, setAiMessage] = useState("");
 
   const params = useParams();
 
   const projectId = params.id as string;
+
   const setDesignModel = useDesignStore((state) => state.setDesignModel);
+
+  const setAiLoading = useDesignStore((state) => state.setAiLoading);
+
+  const designModel = useDesignStore((state) => state.designModel);
+
   const handleGenerate = async () => {
+    console.log("Generate clicked");
     if (!prompt.trim()) return;
 
     try {
       setLoading(true);
+      setAiLoading(true);
 
-      const res = await axios.post("http://localhost:5000/api/ai/generate", {
-        prompt,
-        projectId,
-      });
+      let res;
+
+      if (designModel) {
+        res = await axios.post("http://localhost:5000/api/ai/refine", {
+          projectId,
+          designModel,
+          instruction: prompt,
+        });
+      } else {
+        res = await axios.post("http://localhost:5000/api/ai/generate", {
+          projectId,
+          prompt,
+        });
+      }
 
       setDesignModel(res.data.designModel);
+      setAiMessage(res.data.explanation);
 
       setPrompt("");
     } catch (error) {
       console.error(error);
     } finally {
       setLoading(false);
+      setAiLoading(false);
     }
   };
   return (
@@ -61,12 +82,19 @@ export default function AIChatPanel() {
           disabled={loading}
           className="w-full bg-violet-600 hover:bg-violet-700 rounded-lg py-3 font-medium"
         >
-          Generate Design
+          {loading
+            ? "Thinking..."
+            : designModel
+              ? "Refine Design"
+              : "Generate Design"}
         </button>
+        {aiMessage && (
+          <div className="mt-4 rounded-lg bg-slate-800 p-3 text-sm text-slate-300">
+            <p className="font-semibold text-white mb-1">AI</p>
 
-        <button className="w-full border border-slate-700 hover:border-slate-600 rounded-lg py-3 font-medium">
-          Refine Design
-        </button>
+            <p>{aiMessage}</p>
+          </div>
+        )}
       </div>
     </div>
   );

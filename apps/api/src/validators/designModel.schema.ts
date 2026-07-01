@@ -32,7 +32,9 @@ export const DesignComponentSchema: z.ZodType<any> = z.lazy(() =>
 
     content: z.string().optional(),
 
-    styles: z.record(z.string(), z.string()).optional(),
+    styles: z
+      .record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
+      .optional(),
 
     children: z.array(DesignComponentSchema).optional(),
 
