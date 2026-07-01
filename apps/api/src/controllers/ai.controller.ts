@@ -6,6 +6,8 @@ import { DesignModelSchema } from "../validators/designModel.schema.js";
 import merge from "lodash/merge.js";
 import sharp from "sharp";
 import { hf } from "../lib/huggingface.js";
+import { refineSystemPrompt } from "../prompts/refineSystemPrompts.js";
+import { aiRetry } from "../utils/aiRetry.js";
 
 export async function generateDesign(req: Request, res: Response) {
   try {
@@ -20,26 +22,28 @@ export async function generateDesign(req: Request, res: Response) {
       return;
     }
 
-    const completion = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+    const completion = await aiRetry(() =>
+      groq.chat.completions.create({
+        model: "llama-3.3-70b-versatile",
 
-      messages: [
-        {
-          role: "system",
-          content: generateSystemPrompt,
+        messages: [
+          {
+            role: "system",
+            content: generateSystemPrompt,
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+
+        temperature: 0.5,
+
+        response_format: {
+          type: "json_object",
         },
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-
-      temperature: 0.5,
-
-      response_format: {
-        type: "json_object",
-      },
-    });
+      })
+    );
 
     const content = completion.choices[0]?.message?.content;
 
@@ -85,7 +89,8 @@ export async function generateDesign(req: Request, res: Response) {
 
     res.status(500).json({
       success: false,
-      message: "AI generation failed",
+      error: "AI generation failed",
+      code: "AI_GENERATION_ERROR",
     });
   }
 }
@@ -103,13 +108,46 @@ export async function refineDesign(req: Request, res: Response) {
       return;
     }
 
-    const mockPatch = {
-      theme: {
-        primaryColor: "#2563eb",
-      },
-    };
+    const completion = await aiRetry(() =>
+      groq.chat.completions.create({
+        model: "llama-3.3-70b-versatile",
 
-    const updatedDesignModel = merge(structuredClone(designModel), mockPatch);
+        messages: [
+          {
+            role: "system",
+            content: refineSystemPrompt,
+          },
+          {
+            role: "user",
+            content: JSON.stringify({
+              designModel,
+              instruction,
+            }),
+          },
+        ],
+
+        temperature: 0.2,
+
+        response_format: {
+          type: "json_object",
+        },
+      })
+    );
+
+    const content = completion.choices[0]?.message?.content;
+
+    if (!content) {
+      res.status(500).json({
+        success: false,
+        message: "Groq returned no content",
+      });
+
+      return;
+    }
+
+    const patch = JSON.parse(content);
+
+    const updatedDesignModel = merge(structuredClone(designModel), patch);
     const latestVersion = await prisma.projectVersion.findFirst({
       where: {
         projectId,
@@ -138,7 +176,8 @@ export async function refineDesign(req: Request, res: Response) {
 
     res.status(500).json({
       success: false,
-      message: "Refinement failed",
+      error: "AI refinement failed",
+      code: "AI_REFINEMENT_ERROR",
     });
   }
 }
@@ -235,7 +274,8 @@ export async function generateFromImage(req: Request, res: Response) {
 
     res.status(500).json({
       success: false,
-      message: "Image processing failed",
+      error: "Image processing failed",
+      code: "IMAGE_PROCESSING_ERROR",
     });
   }
 }

@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { aiRateLimiter } from "../middleware/aiRateLimiter.js";
 
 import {
   generateDesign,
@@ -9,6 +10,7 @@ import { upload } from "../middleware/upload.js";
 
 const router = Router();
 
+router.use(aiRateLimiter);
 router.post("/generate", generateDesign);
 router.post("/refine", refineDesign);
 router.post("/from-image", upload.single("image"), generateFromImage);

@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 
 import { useDesignStore } from "../../../src/store/designStore";
+import AIChatPanel from "../../../src/components/editor/aiChatPanel";
 
 export default function ProjectEditorPage() {
   const params = useParams();
@@ -76,37 +77,8 @@ export default function ProjectEditorPage() {
       {/* Main Editor Area */}
       <div className="flex-1 grid grid-cols-12">
         {/* Left Sidebar */}
-        <aside className="col-span-2 border-r border-slate-800 p-5">
-          <h2 className="font-semibold mb-5">Components</h2>
-
-          <div className="space-y-3">
-            {["Button", "Card", "Navbar", "Hero"].map((component) => (
-              <div
-                key={component}
-                onClick={() => {
-                  pushVersion();
-
-                  const id = crypto.randomUUID();
-
-                  setDesignModel({
-                    ...designModel,
-                    components: [
-                      ...designModel.components,
-                      {
-                        id,
-                        type: component,
-                      },
-                    ],
-                  });
-
-                  selectComponent(id);
-                }}
-                className="p-3 rounded-lg border border-slate-800 cursor-pointer hover:border-violet-500"
-              >
-                {component}
-              </div>
-            ))}
-          </div>
+        <aside className="col-span-2">
+          <AIChatPanel />
         </aside>
 
         {/* Canvas */}
