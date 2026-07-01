@@ -5,6 +5,7 @@ import { generateSystemPrompt } from "../prompts/generateSystemPrompt.js";
 import { DesignModelSchema } from "../validators/designModel.schema.js";
 import merge from "lodash/merge.js";
 import sharp from "sharp";
+import { hf } from "../lib/huggingface.js";
 
 export async function generateDesign(req: Request, res: Response) {
   try {
@@ -143,6 +144,7 @@ export async function refineDesign(req: Request, res: Response) {
 }
 
 export async function generateFromImage(req: Request, res: Response) {
+  const projectId = req.body.projectId;
   try {
     if (!req.file) {
       res.status(400).json({
@@ -165,10 +167,68 @@ export async function generateFromImage(req: Request, res: Response) {
 
     const base64 = imageBuffer.toString("base64");
 
+    const response = await hf.chatCompletion({
+      model: "Qwen/Qwen2.5-VL-7B-Instruct",
+
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "Analyze this UI sketch and return ONLY valid DesignModel JSON.",
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: `data:image/jpeg;base64,${base64}`,
+              },
+            },
+          ],
+        },
+      ],
+
+      max_tokens: 2000,
+    });
+
+    const content = response.choices[0]?.message?.content;
+
+    if (!content) {
+      res.status(500).json({
+        success: false,
+        message: "No response from Hugging Face",
+      });
+
+      return;
+    }
+
+    const parsed = JSON.parse(content);
+
+    const designModel = DesignModelSchema.parse(parsed);
+
+    const latestVersion = await prisma.projectVersion.findFirst({
+      where: {
+        projectId,
+      },
+      orderBy: {
+        versionNumber: "desc",
+      },
+    });
+
+    const versionNumber = latestVersion ? latestVersion.versionNumber + 1 : 1;
+
+    const projectVersion = await prisma.projectVersion.create({
+      data: {
+        projectId,
+        versionNumber,
+        designModel,
+      },
+    });
+
     res.json({
       success: true,
-      size: imageBuffer.length,
-      base64Length: base64.length,
+      version: projectVersion,
+      designModel,
     });
   } catch (error) {
     console.error(error);
