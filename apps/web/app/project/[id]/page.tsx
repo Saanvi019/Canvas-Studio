@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useDesignStore } from "../../../src/store/designStore";
 import AIChatPanel from "../../../src/components/editor/aiChatPanel";
 import CanvasRenderer from "../../../src/components/editor/canvasRenderer";
+import DesignCanvas from "../../../src/components/canvas/designCanvas";
 
 export default function ProjectEditorPage() {
   const params = useParams();
@@ -84,7 +85,7 @@ export default function ProjectEditorPage() {
 
         {/* Canvas */}
         <section className="col-span-8 p-8">
-          <CanvasRenderer />
+          <DesignCanvas />
         </section>
 
         {/* Right Sidebar */}
