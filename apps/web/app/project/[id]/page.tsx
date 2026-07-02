@@ -6,6 +6,7 @@ import { useDesignStore } from "../../../src/store/designStore";
 import AIChatPanel from "../../../src/components/editor/aiChatPanel";
 import CanvasRenderer from "../../../src/components/editor/canvasRenderer";
 import DesignCanvas from "../../../src/components/canvas/designCanvas";
+import PropertyPanel from "../../../src/components/propertyPanel";
 
 export default function ProjectEditorPage() {
   const params = useParams();
@@ -89,32 +90,8 @@ export default function ProjectEditorPage() {
         </section>
 
         {/* Right Sidebar */}
-        <aside className="col-span-2 border-l border-slate-800 p-5">
-          <h2 className="font-semibold mb-5">Properties</h2>
-
-          <div className="space-y-3">
-            <div className="p-3 rounded-lg border border-slate-800">
-              Font Size
-            </div>
-
-            <div className="p-3 rounded-lg border border-slate-800">Color</div>
-
-            <div className="p-3 rounded-lg border border-slate-800">
-              Padding
-            </div>
-          </div>
-
-          <div className="mt-6 text-slate-400 text-sm">
-            Selected Component:
-            <br />
-            {selectedComponentId ?? "None"}
-          </div>
-
-          <div className="mt-4 text-slate-400 text-sm">
-            Components Count:
-            <br />
-            {designModel?.components.length ?? 0}
-          </div>
+        <aside>
+          <PropertyPanel />
         </aside>
       </div>
     </main>

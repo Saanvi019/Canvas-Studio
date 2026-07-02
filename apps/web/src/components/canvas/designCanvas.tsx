@@ -5,6 +5,7 @@ import { Stage, Layer } from "react-konva";
 import { Group, Rect, Text } from "react-konva";
 import { useDesignStore } from "../../store/designStore";
 import type { DesignComponent } from "@repo/types";
+import { renderComponent } from "./renderComponent";
 
 export default function DesignCanvas() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -34,47 +35,6 @@ export default function DesignCanvas() {
     return () => window.removeEventListener("resize", updateSize);
   }, []);
 
-  function renderComponent(component: DesignComponent, index: number) {
-    return (
-      <Group
-        key={component.id}
-        x={80}
-        y={60 + index * 150}
-        onClick={(e) => {
-          e.cancelBubble = true;
-          selectComponent(component.id);
-        }}
-      >
-        <Rect
-          width={320}
-          height={100}
-          fill="#ffffff"
-          stroke={selectedComponentId === component.id ? "#3B82F6" : "#CBD5E1"}
-          strokeWidth={selectedComponentId === component.id ? 4 : 2}
-          cornerRadius={12}
-        />
-
-        <Text
-          text={component.type.toUpperCase()}
-          x={16}
-          y={14}
-          fontStyle="bold"
-          fontSize={14}
-          fill="#7C3AED"
-        />
-
-        <Text
-          text={component.content ?? ""}
-          x={16}
-          y={44}
-          width={280}
-          fontSize={18}
-          fill="#111827"
-        />
-      </Group>
-    );
-  }
-
   return (
     <div ref={containerRef} className="w-full h-full">
       <Stage
@@ -82,7 +42,17 @@ export default function DesignCanvas() {
         height={size.height}
         onClick={() => selectComponent(null)}
       >
-        <Layer>{designModel?.components.map(renderComponent)}</Layer>
+        <Layer>
+          {designModel?.components.map((component, index) => (
+            <Group key={component.id} x={80} y={60 + index * 260}>
+              {renderComponent({
+                component,
+                selected: selectedComponentId === component.id,
+                onSelect: () => selectComponent(component.id),
+              })}
+            </Group>
+          ))}
+        </Layer>
       </Stage>
     </div>
   );

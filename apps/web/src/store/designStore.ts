@@ -1,7 +1,8 @@
 import { create } from "zustand";
+import type { DesignModel, DesignComponent } from "@repo/types";
 
 interface DesignStore {
-  designModel: any | null;
+  designModel: DesignModel | null;
 
   selectedComponentId: string | null;
 
@@ -17,7 +18,7 @@ interface DesignStore {
 
   updateComponent: (id: string, patch: any) => void;
 
-  setDesignModel: (model: any) => void;
+  setDesignModel: (model: DesignModel) => void;
 
   selectComponent: (id: string | null) => void;
 
@@ -63,13 +64,10 @@ export const useDesignStore = create<DesignStore>((set, get) => ({
       return;
     }
 
-    const updatedComponents = model.components.map((component: any) =>
-      component.id === id
-        ? {
-            ...component,
-            ...patch,
-          }
-        : component
+    const updatedComponents = updateComponentRecursive(
+      model.components,
+      id,
+      patch
     );
 
     set({
@@ -126,3 +124,27 @@ export const useDesignStore = create<DesignStore>((set, get) => ({
     });
   },
 }));
+
+function updateComponentRecursive(
+  components: any[],
+  id: string,
+  patch: any
+): any[] {
+  return components.map((component) => {
+    if (component.id === id) {
+      return {
+        ...component,
+        ...patch,
+      };
+    }
+
+    if (component.children) {
+      return {
+        ...component,
+        children: updateComponentRecursive(component.children, id, patch),
+      };
+    }
+
+    return component;
+  });
+}
